@@ -1,62 +1,50 @@
-# 🎲 Lottery Predictor Pro
+# Lottery Predictor Pro
 
-A sophisticated lottery prediction tool that combines web scraping, machine learning, and pattern analysis to predict lottery numbers. Built with Streamlit, this application provides an interactive interface for analyzing historical lottery data and generating predictions.
+A sophisticated lottery number prediction tool built with Python and Streamlit.
 
-## 🚀 Features
+## Features
 
-- **Data Collection**: Scrapes historical lottery data automatically
-- **Pattern Analysis**: Detects sequential patterns and correlations
-- **ML Predictions**: Uses Random Forest models for number prediction
-- **Multiple Prediction Modes**: Single prediction, reroll, and bulk predictions
-- **Interactive Visualizations**: Comprehensive data analysis and trends
-- **Pattern-Based Logic**: Incorporates observed lottery number patterns
-
-## 📋 Requirements
-
-- Python 3.7+
-- Required packages listed in `requirements.txt`
-
-## 🛠️ Installation
-
-1. Clone the repository:
-```bash
-git clone <your-repository-url>
-cd lottery-predictor-pro
-```
-
-2. Install required packages:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-```bash
-streamlit run main.py
-```
-
-## 💻 Usage
-
-1. Launch the application
-2. Choose data source (scrape new data or upload existing)
-3. View analysis and predictions
-4. Use various prediction modes:
-   - Single prediction
-   - Reroll prediction
-   - Multiple prediction sets
-   - Pattern-based predictions
-
-## 📊 Analysis Features
-
-- Hot and cold numbers
-- Time-based analysis
+- Web scraping of historical lottery data from multiple pages
+- Advanced data analysis and pattern detection
+- Machine Learning-based prediction using Random Forest
+- AI model integration (GPT, Claude, Grok) for predictions
+- Multiple prediction modes (single, reroll, 50x, 1000x)
+- Top numbers analysis from multiple predictions
+- Beautiful and intuitive Streamlit UI
+- Secure API key management
 - Sequential pattern detection
-- Position-based correlations
-- Multiple prediction confidence scoring
+- Comprehensive statistical analysis
 
-## 🔒 Security Note
+## Installation
 
-This tool is for educational purposes only. Please check your local regulations regarding lottery predictions and gambling.
+1. Clone the repository
+2. Create a virtual environment: `python -m venv venv`
+3. Activate the virtual environment:
+   - Windows: `venv\Scripts\activate`
+   - Unix/MacOS: `source venv/bin/activate`
+4. Install dependencies: `pip install -r requirements.txt`
 
-## 📝 License
+## Usage
 
-MIT License 
+1. Run the app: `streamlit run streamlit_app.py`
+2. Choose data source (scrape new or upload existing)
+3. View analysis in different tabs
+4. Generate predictions using ML or AI models
+5. Configure API keys in Settings page for AI models
+
+## Requirements
+
+See `requirements.txt` for full list of dependencies:
+- streamlit
+- pandas
+- numpy
+- scikit-learn
+- beautifulsoup4
+- requests
+- plotly
+- joblib
+- tqdm
+
+## Note
+
+This tool is for educational purposes only. Past performance does not guarantee future results. 
