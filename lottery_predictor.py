@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from bs4 import BeautifulSoup
 import requests
+from lottery_scraper import LotteryScraper
 
 # Set page configuration
 st.set_page_config(
@@ -33,21 +34,19 @@ class LotteryPredictor:
     def __init__(self):
         self.data = None
         self.model = RandomForestRegressor(n_estimators=100, random_state=42)
+        self.scraper = LotteryScraper()
     
-    def scrape_lottery_data(self, url):
-        """
-        Scrape lottery data from the provided URL
-        This is a placeholder - you'll need to implement the actual scraping logic
-        based on your specific lottery website
-        """
+    def fetch_lottery_data(self):
+        """Fetch lottery data using the scraper"""
         try:
-            response = requests.get(url)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            # Implement your specific scraping logic here
-            # Return DataFrame with columns: date, number1, number2, number3, number4, number5
-            pass
+            data = self.scraper.scrape_historical_data()
+            if not data.empty:
+                return data
+            else:
+                st.error("Failed to fetch lottery data")
+                return None
         except Exception as e:
-            st.error(f"Error scraping data: {str(e)}")
+            st.error(f"Error fetching data: {str(e)}")
             return None
 
     def prepare_features(self, df):
@@ -70,7 +69,7 @@ class LotteryPredictor:
     def predict_next_numbers(self, next_date):
         """Predict lottery numbers for the next draw"""
         next_features = pd.DataFrame({
-            'day_of_week': [next_date.dayofweek],
+            'day_of_week': [next_date.weekday()],
             'month': [next_date.month],
             'year': [next_date.year],
             'day_of_month': [next_date.day]
@@ -91,21 +90,17 @@ def main():
     
     predictor = LotteryPredictor()
     
-    # File upload section
+    # Data loading section
     st.header("📊 Data Input")
-    data_option = st.radio(
-        "Choose data input method:",
-        ("Upload CSV", "Enter Website URL")
-    )
     
-    if data_option == "Upload CSV":
-        uploaded_file = st.file_uploader("Upload your lottery data CSV", type=['csv'])
-        if uploaded_file is not None:
-            predictor.data = pd.read_csv(uploaded_file)
-    else:
-        url = st.text_input("Enter lottery website URL")
-        if url and st.button("Fetch Data"):
-            predictor.data = predictor.scrape_lottery_data(url)
+    if st.button("Fetch Latest Lottery Data"):
+        with st.spinner("Fetching lottery data... This might take a few minutes..."):
+            predictor.data = predictor.fetch_lottery_data()
+    
+    # Allow CSV upload as backup option
+    uploaded_file = st.file_uploader("Or upload your own lottery data CSV", type=['csv'])
+    if uploaded_file is not None:
+        predictor.data = pd.read_csv(uploaded_file)
     
     if predictor.data is not None:
         st.success("Data loaded successfully!")
@@ -163,13 +158,13 @@ def main():
             st.write(f"Model accuracy for number {i}: {score:.2f}")
         
         # Predict next numbers
-        next_monday = datetime.now()
-        while next_monday.weekday() != 0:  # 0 represents Monday
-            next_monday += timedelta(days=1)
+        next_date = datetime.now()
+        while next_date.weekday() == 6:  # Skip Sunday (6 represents Sunday)
+            next_date += timedelta(days=1)
             
-        st.subheader(f"Predicted Numbers for {next_monday.strftime('%Y-%m-%d')}")
+        st.subheader(f"Predicted Numbers for {next_date.strftime('%Y-%m-%d')}")
         
-        predicted_numbers = predictor.predict_next_numbers(next_monday)
+        predicted_numbers = predictor.predict_next_numbers(next_date)
         
         # Display predicted numbers with animation
         cols = st.columns(5)

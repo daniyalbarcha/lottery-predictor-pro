@@ -317,7 +317,7 @@ if __name__ == "__main__":
     
     # Predict next draw
     next_date = datetime.now()
-    while next_date.weekday() != 0:  # Find next Monday
+    while next_date.weekday() == 6:  # Skip Sunday
         next_date += timedelta(days=1)
     
     predictions = analyzer.predict_next_numbers(last_numbers, next_date)
