@@ -273,47 +273,76 @@ def main():
         
         with pred_col1:
             if st.button("🎲 Predict Numbers", type="primary"):
-                if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = st.session_state.analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
-                    st.session_state.ai_prediction = None
-                else:
-                    st.session_state.current_prediction = None
-                    st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
-                        st.session_state.ai_model, 
-                        st.session_state.last_numbers, 
-                        st.session_state.historical_data
-                    )
-                st.session_state.prediction_count += 1
+                try:
+                    if prediction_method == "Traditional ML":
+                        st.session_state.current_prediction = st.session_state.analyzer.predict_with_sequential_logic(
+                            st.session_state.last_numbers, 
+                            next_date
+                        )
+                        st.session_state.ai_prediction = None
+                        st.session_state.ai_confidence = None
+                    else:
+                        if st.session_state.ai_model is None:
+                            st.error("Please select an AI model first")
+                        else:
+                            st.session_state.current_prediction = None
+                            st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
+                                st.session_state.ai_model,
+                                st.session_state.last_numbers,
+                                st.session_state.historical_data
+                            )
+                    st.session_state.prediction_count += 1
+                except Exception as e:
+                    st.error(f"Error during prediction: {str(e)}")
         
         with pred_col2:
             if st.button("🔄 Reroll Prediction"):
-                if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = st.session_state.analyzer.reroll_prediction(
-                        st.session_state.last_numbers, next_date, st.session_state.current_prediction
-                    )
-                    st.session_state.ai_prediction = None
-                else:
-                    st.session_state.current_prediction = None
-                    st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
-                        st.session_state.ai_model, 
-                        st.session_state.last_numbers, 
-                        st.session_state.historical_data
-                    )
-                st.session_state.prediction_count += 1
+                try:
+                    if prediction_method == "Traditional ML":
+                        st.session_state.current_prediction = st.session_state.analyzer.reroll_prediction(
+                            st.session_state.last_numbers,
+                            next_date,
+                            st.session_state.current_prediction
+                        )
+                        st.session_state.ai_prediction = None
+                        st.session_state.ai_confidence = None
+                    else:
+                        if st.session_state.ai_model is None:
+                            st.error("Please select an AI model first")
+                        else:
+                            st.session_state.current_prediction = None
+                            st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
+                                st.session_state.ai_model,
+                                st.session_state.last_numbers,
+                                st.session_state.historical_data
+                            )
+                    st.session_state.prediction_count += 1
+                except Exception as e:
+                    st.error(f"Error during prediction: {str(e)}")
         
         with pred_col3:
             if st.button("🎰 Predict Again"):
-                if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = st.session_state.analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
-                    st.session_state.ai_prediction = None
-                else:
-                    st.session_state.current_prediction = None
-                    st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
-                        st.session_state.ai_model, 
-                        st.session_state.last_numbers, 
-                        st.session_state.historical_data
-                    )
-                st.session_state.prediction_count += 1
+                try:
+                    if prediction_method == "Traditional ML":
+                        st.session_state.current_prediction = st.session_state.analyzer.predict_with_sequential_logic(
+                            st.session_state.last_numbers,
+                            next_date
+                        )
+                        st.session_state.ai_prediction = None
+                        st.session_state.ai_confidence = None
+                    else:
+                        if st.session_state.ai_model is None:
+                            st.error("Please select an AI model first")
+                        else:
+                            st.session_state.current_prediction = None
+                            st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
+                                st.session_state.ai_model,
+                                st.session_state.last_numbers,
+                                st.session_state.historical_data
+                            )
+                    st.session_state.prediction_count += 1
+                except Exception as e:
+                    st.error(f"Error during prediction: {str(e)}")
         
         with pred_col4:
             prediction_count = st.selectbox("Prediction Sets", [10, 25, 50, 100], index=2)
