@@ -65,6 +65,21 @@ st.markdown("""
 
 def simulate_ai_prediction(model_name, last_numbers, historical_data):
     """Simulate AI model predictions based on historical patterns"""
+    # Verify API key is available
+    if 'api_keys' not in st.session_state:
+        raise ValueError(f"No API keys found. Please add your {model_name} API key in Settings.")
+    
+    api_key = None
+    if model_name == "GPT":
+        api_key = st.session_state.api_keys.get("openai_api_key")
+    elif model_name == "Claude":
+        api_key = st.session_state.api_keys.get("anthropic_api_key")
+    elif model_name == "Grok":
+        api_key = st.session_state.api_keys.get("grok_api_key")
+    
+    if not api_key:
+        raise ValueError(f"No valid API key found for {model_name}. Please add your API key in Settings.")
+    
     # Each AI model has slightly different prediction strategies
     if model_name == "GPT":
         # GPT focuses more on recent patterns and frequency
@@ -95,27 +110,41 @@ def simulate_ai_prediction(model_name, last_numbers, historical_data):
     
     while len(predictions) < 5:
         # Consider last numbers with weight
-        base = random.choices(last_numbers, weights=weights)[0]
+        if len(last_numbers) > 0:  # Check if last_numbers is not empty
+            base = random.choices(last_numbers, weights=weights)[0]
+        else:
+            # Fallback to random selection from frequency distribution
+            base = random.choice(freq_dist.index)
         
         # Apply model-specific modifications
-        if model_name == "GPT":
-            # GPT tends to favor frequently occurring numbers
-            candidates = freq_dist.head(10).index.tolist()
-            num = random.choice(candidates) if candidates else base
-        elif model_name == "Claude":
-            # Claude balances between patterns and innovation
-            num = base + random.choice([-2, -1, 0, 1, 2])
-        else:  # Grok
-            # Grok looks for pattern breaks
-            num = base + random.choice([-3, -2, -1, 1, 2, 3])
+        candidates = []
         
-        # Ensure number is valid and unique
-        num = max(1, min(39, num))
-        if num not in used_numbers:
-            predictions.append(num)
-            used_numbers.add(num)
+        # Add numbers close to base
+        for offset in [-2, -1, 0, 1, 2]:
+            candidate = base + offset
+            if 1 <= candidate <= 39 and candidate not in used_numbers:  # Assuming 1-39 range
+                candidates.append(candidate)
+        
+        # Add some frequent numbers from historical data
+        top_freq = freq_dist.head(10).index.tolist()
+        candidates.extend([n for n in top_freq if n not in used_numbers])
+        
+        # If no candidates found, pick a random unused number
+        if not candidates:
+            unused = list(set(range(1, 40)) - used_numbers)
+            if unused:
+                candidates = [random.choice(unused)]
+        
+        if candidates:
+            # Select number and add to predictions
+            selected = random.choice(candidates)
+            predictions.append(selected)
+            used_numbers.add(selected)
     
-    return sorted(predictions), confidence
+    # Sort predictions
+    predictions.sort()
+    
+    return predictions, confidence
 
 def calculate_advanced_metrics(data):
     """Calculate advanced metrics from the dataset"""
@@ -135,16 +164,37 @@ def calculate_advanced_metrics(data):
     return metrics
 
 def check_api_keys():
-    """Check if required API keys are available"""
+    """Check if required API keys are available in either secrets or session state"""
+    api_keys = {}
+    
+    # Try to get keys from session state first
+    if 'api_keys' in st.session_state:
+        session_keys = st.session_state.api_keys
+        api_keys.update({
+            "openai_api_key": session_keys.get("openai_api_key", ""),
+            "anthropic_api_key": session_keys.get("anthropic_api_key", ""),
+            "grok_api_key": session_keys.get("grok_api_key", "")
+        })
+    
+    # Try to get keys from secrets as fallback
     try:
-        api_keys = st.secrets.api_keys
-        return {
-            "GPT": bool(api_keys.get("openai_api_key")),
-            "Claude": bool(api_keys.get("anthropic_api_key")),
-            "Grok": bool(api_keys.get("grok_api_key"))
-        }
+        secrets_keys = st.secrets.api_keys
+        # Only update if the key doesn't exist or is empty in session state
+        if not api_keys.get("openai_api_key"):
+            api_keys["openai_api_key"] = secrets_keys.get("openai_api_key", "")
+        if not api_keys.get("anthropic_api_key"):
+            api_keys["anthropic_api_key"] = secrets_keys.get("anthropic_api_key", "")
+        if not api_keys.get("grok_api_key"):
+            api_keys["grok_api_key"] = secrets_keys.get("grok_api_key", "")
     except:
-        return {"GPT": False, "Claude": False, "Grok": False}
+        pass  # If secrets aren't available, use what we have from session state
+    
+    # Return which models are available based on API keys
+    return {
+        "GPT": bool(api_keys.get("openai_api_key")),
+        "Claude": bool(api_keys.get("anthropic_api_key")),
+        "Grok": bool(api_keys.get("grok_api_key"))
+    }
 
 def analyze_top_numbers(predictions_list, top_n=20):
     """Analyze multiple prediction sets to find the most frequently predicted numbers"""
