@@ -26,8 +26,12 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 def load_api_keys():
-    """Load API keys from .streamlit/secrets.toml if it exists"""
+    """Load API keys from session state or secrets"""
     try:
+        # First try to get from session state
+        if 'api_keys' in st.session_state:
+            return st.session_state.api_keys
+        # Then try to get from secrets
         return st.secrets.api_keys
     except:
         return {
@@ -37,35 +41,8 @@ def load_api_keys():
         }
 
 def save_api_keys(keys):
-    """Save API keys to .streamlit/secrets.toml"""
-    # Create .streamlit directory if it doesn't exist
-    streamlit_dir = Path(".streamlit")
-    streamlit_dir.mkdir(exist_ok=True)
-    
-    # Read existing secrets if any
-    secrets_path = streamlit_dir / "secrets.toml"
-    existing_secrets = {}
-    if secrets_path.exists():
-        with open(secrets_path, "r") as f:
-            for line in f:
-                if "=" in line:
-                    key, value = line.strip().split("=", 1)
-                    existing_secrets[key.strip()] = value.strip().strip('"')
-    
-    # Update with new API keys
-    existing_secrets.update({
-        "api_keys": {
-            "openai_api_key": keys["openai_api_key"],
-            "anthropic_api_key": keys["anthropic_api_key"],
-            "grok_api_key": keys["grok_api_key"]
-        }
-    })
-    
-    # Write back to secrets.toml
-    with open(secrets_path, "w") as f:
-        f.write("[api_keys]\n")
-        for key, value in keys.items():
-            f.write(f'{key} = "{value}"\n')
+    """Save API keys to session state"""
+    st.session_state.api_keys = keys
 
 def main():
     st.title("⚙️ Settings")
@@ -75,7 +52,7 @@ def main():
     
     st.header("🔑 API Key Management")
     st.info("""
-    Enter your API keys for each AI model. These keys will be securely stored and used for predictions.
+    Enter your API keys for each AI model. These keys will be stored for your current session.
     Don't have API keys? Visit:
     - OpenAI (GPT): https://platform.openai.com
     - Anthropic (Claude): https://console.anthropic.com
@@ -150,10 +127,10 @@ def main():
     st.header("🔒 Security Information")
     st.markdown("""
     Your API keys are:
-    - Stored locally in `.streamlit/secrets.toml`
+    - Stored securely in your session
     - Never transmitted to any third party
-    - Encrypted at rest
     - Only used for model API calls
+    - Cleared when you close the browser
     """)
 
 if __name__ == "__main__":
