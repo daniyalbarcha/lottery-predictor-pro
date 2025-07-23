@@ -11,6 +11,26 @@ import random
 # Page configuration
 st.set_page_config(page_title="Lottery Predictor Pro", layout="wide", page_icon="🎲")
 
+# Initialize session state variables at the very beginning
+if 'historical_data' not in st.session_state:
+    st.session_state.historical_data = None
+if 'analyzer' not in st.session_state:
+    st.session_state.analyzer = LotteryAnalyzer()
+if 'current_prediction' not in st.session_state:
+    st.session_state.current_prediction = None
+if 'multiple_predictions' not in st.session_state:
+    st.session_state.multiple_predictions = []
+if 'prediction_count' not in st.session_state:
+    st.session_state.prediction_count = 0
+if 'ai_prediction' not in st.session_state:
+    st.session_state.ai_prediction = None
+if 'ai_confidence' not in st.session_state:
+    st.session_state.ai_confidence = None
+if 'ai_model' not in st.session_state:
+    st.session_state.ai_model = None
+if 'last_numbers' not in st.session_state:
+    st.session_state.last_numbers = None
+
 # Custom CSS
 st.markdown("""
     <style>
@@ -156,26 +176,6 @@ def analyze_top_numbers(predictions_list, top_n=20):
 def main():
     st.title("🎲 Lottery Predictor Pro")
     
-    # Initialize session state
-    if 'historical_data' not in st.session_state:
-        st.session_state.historical_data = None
-    if 'analyzer' not in st.session_state:
-        st.session_state.analyzer = LotteryAnalyzer()
-    if 'current_prediction' not in st.session_state:
-        st.session_state.current_prediction = None
-    if 'multiple_predictions' not in st.session_state:
-        st.session_state.multiple_predictions = []
-    if 'prediction_count' not in st.session_state:
-        st.session_state.prediction_count = 0
-    if 'ai_prediction' not in st.session_state:
-        st.session_state.ai_prediction = None
-    if 'ai_confidence' not in st.session_state:
-        st.session_state.ai_confidence = None
-    if 'ai_model' not in st.session_state:
-        st.session_state.ai_model = None
-    if 'last_numbers' not in st.session_state:
-        st.session_state.last_numbers = None
-    
     # Check API keys
     available_models = check_api_keys()
     
@@ -225,10 +225,9 @@ def main():
         st.dataframe(st.session_state.historical_data.head())
         
         # Train model and make predictions
-        analyzer = st.session_state.analyzer
-        analyzer.train_models(st.session_state.historical_data)
+        st.session_state.analyzer.train_models(st.session_state.historical_data)
         
-        # Get last numbers
+        # Get last numbers and store in session state
         st.session_state.last_numbers = st.session_state.historical_data.iloc[0][
             ['number1', 'number2', 'number3', 'number4', 'number5']
         ].values
@@ -254,11 +253,13 @@ def main():
                 st.error("⚠️ No AI models available. Please add API keys in Settings.")
                 st.info("Go to Settings page to configure your API keys.")
             else:
-                st.session_state.ai_model = st.selectbox(
+                # Store selected AI model in session state
+                selected_model = st.selectbox(
                     "Select AI Model",
                     available_ai_models,
                     help="Each AI model uses different strategies for prediction"
                 )
+                st.session_state.ai_model = selected_model
                 
                 # Show API key status
                 st.markdown("### 🔑 API Key Status")
@@ -273,7 +274,7 @@ def main():
         with pred_col1:
             if st.button("🎲 Predict Numbers", type="primary"):
                 if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
+                    st.session_state.current_prediction = st.session_state.analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
                     st.session_state.ai_prediction = None
                 else:
                     st.session_state.current_prediction = None
@@ -287,7 +288,7 @@ def main():
         with pred_col2:
             if st.button("🔄 Reroll Prediction"):
                 if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = analyzer.reroll_prediction(
+                    st.session_state.current_prediction = st.session_state.analyzer.reroll_prediction(
                         st.session_state.last_numbers, next_date, st.session_state.current_prediction
                     )
                     st.session_state.ai_prediction = None
@@ -303,7 +304,7 @@ def main():
         with pred_col3:
             if st.button("🎰 Predict Again"):
                 if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
+                    st.session_state.current_prediction = st.session_state.analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
                     st.session_state.ai_prediction = None
                 else:
                     st.session_state.current_prediction = None
@@ -319,7 +320,7 @@ def main():
             if st.button(f"🚀 Predict {prediction_count}x"):
                 if prediction_method == "Traditional ML":
                     with st.spinner(f"Generating {prediction_count} prediction sets..."):
-                        st.session_state.multiple_predictions = analyzer.predict_multiple_sets(
+                        st.session_state.multiple_predictions = st.session_state.analyzer.predict_multiple_sets(
                             st.session_state.last_numbers, next_date, count=prediction_count, use_patterns=True
                         )
                     st.success(f"Generated {prediction_count} prediction sets!")
@@ -345,7 +346,7 @@ def main():
                     thousand_predictions = []
                     for _ in range(1000):
                         if prediction_method == "Traditional ML":
-                            pred = analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
+                            pred = st.session_state.analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
                             thousand_predictions.append(pred)
                         else:
                             pred, _ = simulate_ai_prediction(st.session_state.ai_model, st.session_state.last_numbers, st.session_state.historical_data)
@@ -435,7 +436,7 @@ def main():
             st.header("📊 Multiple Predictions Analysis")
             
             # Confidence Analysis
-            confidence_analysis = analyzer.analyze_prediction_confidence(st.session_state.multiple_predictions)
+            confidence_analysis = st.session_state.analyzer.analyze_prediction_confidence(st.session_state.multiple_predictions)
             
             col1, col2 = st.columns(2)
             
@@ -501,7 +502,7 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
             
             # Day of week analysis
-            patterns = analyzer.analyze_patterns(st.session_state.historical_data)
+            patterns = st.session_state.analyzer.analyze_patterns(st.session_state.historical_data)
             st.subheader("📅 Day of Week Patterns")
             day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
             day_stats = patterns['day_statistics']
@@ -574,7 +575,7 @@ def main():
             st.subheader("🔍 Sequential Pattern Analysis")
             st.info("Based on your observation of +1 patterns and sequential logic in lottery draws")
             
-            patterns = analyzer.analyze_patterns(st.session_state.historical_data)
+            patterns = st.session_state.analyzer.analyze_patterns(st.session_state.historical_data)
             seq_patterns = patterns['sequential_patterns']
             
             # Display +1 pattern frequency
