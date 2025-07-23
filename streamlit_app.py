@@ -171,6 +171,10 @@ def main():
         st.session_state.ai_prediction = None
     if 'ai_confidence' not in st.session_state:
         st.session_state.ai_confidence = None
+    if 'ai_model' not in st.session_state:
+        st.session_state.ai_model = None
+    if 'last_numbers' not in st.session_state:
+        st.session_state.last_numbers = None
     
     # Check API keys
     available_models = check_api_keys()
@@ -225,7 +229,7 @@ def main():
         analyzer.train_models(st.session_state.historical_data)
         
         # Get last numbers
-        last_numbers = st.session_state.historical_data.iloc[0][
+        st.session_state.last_numbers = st.session_state.historical_data.iloc[0][
             ['number1', 'number2', 'number3', 'number4', 'number5']
         ].values
         
@@ -250,7 +254,7 @@ def main():
                 st.error("⚠️ No AI models available. Please add API keys in Settings.")
                 st.info("Go to Settings page to configure your API keys.")
             else:
-                ai_model = st.selectbox(
+                st.session_state.ai_model = st.selectbox(
                     "Select AI Model",
                     available_ai_models,
                     help="Each AI model uses different strategies for prediction"
@@ -269,12 +273,14 @@ def main():
         with pred_col1:
             if st.button("🎲 Predict Numbers", type="primary"):
                 if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = analyzer.predict_with_sequential_logic(last_numbers, next_date)
+                    st.session_state.current_prediction = analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
                     st.session_state.ai_prediction = None
                 else:
                     st.session_state.current_prediction = None
                     st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
-                        ai_model, last_numbers, st.session_state.historical_data
+                        st.session_state.ai_model, 
+                        st.session_state.last_numbers, 
+                        st.session_state.historical_data
                     )
                 st.session_state.prediction_count += 1
         
@@ -282,25 +288,29 @@ def main():
             if st.button("🔄 Reroll Prediction"):
                 if prediction_method == "Traditional ML":
                     st.session_state.current_prediction = analyzer.reroll_prediction(
-                        last_numbers, next_date, st.session_state.current_prediction
+                        st.session_state.last_numbers, next_date, st.session_state.current_prediction
                     )
                     st.session_state.ai_prediction = None
                 else:
                     st.session_state.current_prediction = None
                     st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
-                        ai_model, last_numbers, st.session_state.historical_data
+                        st.session_state.ai_model, 
+                        st.session_state.last_numbers, 
+                        st.session_state.historical_data
                     )
                 st.session_state.prediction_count += 1
         
         with pred_col3:
             if st.button("🎰 Predict Again"):
                 if prediction_method == "Traditional ML":
-                    st.session_state.current_prediction = analyzer.predict_with_sequential_logic(last_numbers, next_date)
+                    st.session_state.current_prediction = analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
                     st.session_state.ai_prediction = None
                 else:
                     st.session_state.current_prediction = None
                     st.session_state.ai_prediction, st.session_state.ai_confidence = simulate_ai_prediction(
-                        ai_model, last_numbers, st.session_state.historical_data
+                        st.session_state.ai_model, 
+                        st.session_state.last_numbers, 
+                        st.session_state.historical_data
                     )
                 st.session_state.prediction_count += 1
         
@@ -310,18 +320,18 @@ def main():
                 if prediction_method == "Traditional ML":
                     with st.spinner(f"Generating {prediction_count} prediction sets..."):
                         st.session_state.multiple_predictions = analyzer.predict_multiple_sets(
-                            last_numbers, next_date, count=prediction_count, use_patterns=True
+                            st.session_state.last_numbers, next_date, count=prediction_count, use_patterns=True
                         )
                     st.success(f"Generated {prediction_count} prediction sets!")
                 else:
                     with st.spinner(f"Generating {prediction_count} AI prediction sets..."):
                         predictions = []
                         for i in range(prediction_count):
-                            nums, conf = simulate_ai_prediction(ai_model, last_numbers, st.session_state.historical_data)
+                            nums, conf = simulate_ai_prediction(st.session_state.ai_model, st.session_state.last_numbers, st.session_state.historical_data)
                             predictions.append({
                                 'set_number': i + 1,
                                 'numbers': nums,
-                                'prediction_method': f'AI ({ai_model})',
+                                'prediction_method': f'AI ({st.session_state.ai_model})',
                                 'confidence': conf
                             })
                         st.session_state.multiple_predictions = predictions
@@ -335,10 +345,10 @@ def main():
                     thousand_predictions = []
                     for _ in range(1000):
                         if prediction_method == "Traditional ML":
-                            pred = analyzer.predict_with_sequential_logic(last_numbers, next_date)
+                            pred = analyzer.predict_with_sequential_logic(st.session_state.last_numbers, next_date)
                             thousand_predictions.append(pred)
                         else:
-                            pred, _ = simulate_ai_prediction(ai_model, last_numbers, st.session_state.historical_data)
+                            pred, _ = simulate_ai_prediction(st.session_state.ai_model, st.session_state.last_numbers, st.session_state.historical_data)
                             thousand_predictions.append({'numbers': pred})
                     
                     # Analyze top numbers
